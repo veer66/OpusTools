@@ -50,13 +50,10 @@ class OpusFilter:
 
     def read_from_opus(self, parameters):
         """Download and read a corpus from OPUS"""
-        fromto = sorted([parameters['source_language'],
-            parameters['target_language']])
-        src_lan = fromto[0]
-        tgt_lan = fromto[1]
-
         opus_reader = OpusRead(directory=parameters['corpus_name'],
-            source=src_lan, target=tgt_lan, release=parameters['release'],
+            source=parameters['source_language'],
+            target=parameters['target_language'],
+            release=parameters['release'],
             preprocess=parameters['preprocessing'], write_mode='moses',
             write=[os.path.join(self.output_dir, parameters['src_output']),
                 os.path.join(self.output_dir, parameters['tgt_output'])],
