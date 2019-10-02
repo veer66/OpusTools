@@ -1,4 +1,5 @@
 import argparse
+import copy
 import logging
 import os
 import random
@@ -226,7 +227,9 @@ class OpusFilter:
         if not overwrite and os.path.isfile(score_out):
             logger.info("Output file exists, skipping step")
             return
-        for f in parameters['filters']:
+        # Make a copy so that the original paths are not modified
+        filter_params = copy.deepcopy(parameters['filters'])
+        for f in filter_params:
             filter_name = next(iter(f.items()))[0]
             if filter_name == 'WordAlignFilter' and 'priors' in f[filter_name]:
                 f[filter_name]['priors'] = os.path.join(self.output_dir,
@@ -241,7 +244,7 @@ class OpusFilter:
 
         pairs_gen = self.get_pairs(parameters['src_input'],
                 parameters['tgt_input'])
-        filter_pipe = FilterPipeline.from_config(parameters['filters'])
+        filter_pipe = FilterPipeline.from_config(filter_params)
         scores_gen = filter_pipe.score(pairs_gen)
 
         with file_open(score_out, 'w') as score_file:
