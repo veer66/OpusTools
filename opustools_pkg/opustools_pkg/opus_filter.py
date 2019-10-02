@@ -1,9 +1,11 @@
-import os
-import json
-import subprocess
-import logging
 import argparse
+import logging
+import os
+import random
+import subprocess
 
+import json
+from tqdm import tqdm
 from yaml import load, Loader
 
 from . import OpusRead
@@ -37,6 +39,8 @@ class OpusFilter:
         self.step_functions = {
                 'opus_read': self.read_from_opus,
                 'filter': self.clean_data,
+                'concatenate': self.concatenate,
+                'subset': self.get_subset,
                 'train_ngram': self.train_ngram,
                 'train_alignment': self.train_alignment,
                 'score': self.score_data
@@ -72,7 +76,7 @@ class OpusFilter:
         tgt_tokenize = tokenization.get_tokenize(tgt_tokenizer)
         with file_open(source_file_name) as source_file, \
                 file_open(target_file_name) as target_file:
-            for src_line in source_file:
+            for src_line in tqdm(source_file):
                 tgt_line = target_file.readline()
                 yield (src_tokenize(src_line.rstrip()), tgt_tokenize(tgt_line.rstrip()))
 
@@ -100,6 +104,88 @@ class OpusFilter:
             for pair in pairs:
                 source_file.write(pair[0]+'\n')
                 target_file.write(pair[1]+'\n')
+                source_file.flush()
+                target_file.flush()
+
+    def concatenate(self, parameters, overwrite=False):
+        """Concatenate files"""
+        outfile = os.path.join(self.output_dir, parameters['output'])
+        if not overwrite and os.path.isfile(outfile):
+            logger.info("Output file exists, skipping step")
+            return
+        with file_open(outfile, 'w') as outf:
+            for infile in parameters['inputs']:
+                with file_open(os.path.join(self.output_dir, infile)) as inf:
+                    for line in inf:
+                        outf.write(line)
+
+    @staticmethod
+    def _get_total_lines(fname):
+        """Return number of lines in file"""
+        with file_open(fname) as fobj:
+            total = -1
+            for total, _ in tqdm(enumerate(fobj)):
+                pass
+        return total + 1
+
+    @staticmethod
+    def _yield_subset(iterable, indices):
+        """Yield items for which the indices match"""
+        if not indices:
+            return
+        remaining = sorted(indices, reverse=True)
+        cur = remaining.pop()
+        for idx, item in tqdm(enumerate(iterable)):
+            if idx == cur:
+                yield item
+                if remaining:
+                    cur = remaining.pop()
+                else:
+                    return
+
+    def get_subset(self, parameters, overwrite=False):
+        """Get random subset of parallel data
+
+        Keeps the order of lines, unless if shuffle_target is True in
+        parameters, in which case the target lines will be in a random
+        order.
+
+        """
+        src_in = os.path.join(self.output_dir, parameters['src_input'])
+        tgt_in = os.path.join(self.output_dir, parameters['tgt_input'])
+        src_out = os.path.join(self.output_dir, parameters['src_output'])
+        tgt_out = os.path.join(self.output_dir, parameters['tgt_output'])
+        if not overwrite and os.path.isfile(src_out) and os.path.isfile(tgt_out):
+            logger.info("Output files exists, skipping step")
+            return
+        random.seed(parameters.get('seed', None))
+        size = parameters['size']
+        shuffle_target = parameters.get('shuffle_target', False)
+        total = self._get_total_lines(src_in)
+        logger.info("Sampling subset of %s lines from total %s lines", size, total)
+        if shuffle_target:
+            sample = random.sample(range(total), size)
+            with file_open(src_in) as inf, \
+                 file_open(src_out, 'w') as outf:
+                for line in self._yield_subset(inf, sample):
+                    outf.write(line)
+            sample = random.sample(range(total), size)
+            with file_open(tgt_in) as inf:
+                lines = [line for line in self._yield_subset(inf, sample)]
+            random.shuffle(lines)
+            with file_open(tgt_out, 'w') as outf:
+                for line in lines:
+                    outf.write(line)
+        else:
+            sample = random.sample(range(total), size)
+            with file_open(src_in) as inf, \
+                 file_open(src_out, 'w') as outf:
+                for line in self._yield_subset(inf, sample):
+                    outf.write(line)
+            with file_open(tgt_in) as inf, \
+                 file_open(tgt_out, 'w') as outf:
+                for line in self._yield_subset(inf, sample):
+                    outf.write(line)
 
     def train_ngram(self, parameters, overwrite=False):
         """Train an n-gram language model"""
@@ -114,7 +200,7 @@ class OpusFilter:
                 infile, \
                 file_open(os.path.join(self.output_dir, seg_name), 'w') as \
                 outfile:
-            for line in infile:
+            for line in tqdm(infile):
                 tokens = tokenizer.tokenize(line.strip())
                 outfile.write(' '.join(tokens) + '\n')
         lm.train(os.path.join(self.output_dir, seg_name), model_out,
