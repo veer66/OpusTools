@@ -100,13 +100,16 @@ class OpusFilter:
         pairs_gen = self.get_pairs(parameters['src_input'],
                 parameters['tgt_input'])
         pairs = filter_pipe.filter(pairs_gen)
+        limit = parameters.get('limit')
         with file_open(src_out, 'w') as source_file, \
                 file_open(tgt_out, 'w') as target_file:
-            for pair in pairs:
+            for idx, pair in enumerate(pairs):
                 source_file.write(pair[0]+'\n')
                 target_file.write(pair[1]+'\n')
                 source_file.flush()
                 target_file.flush()
+                if limit and idx >= limit - 1:
+                    break
 
     def concatenate(self, parameters, overwrite=False):
         """Concatenate files"""
