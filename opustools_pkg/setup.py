@@ -15,6 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     scripts=["bin/opus_read", "bin/opus_cat", "bin/opus_get",
         "bin/opus_langid", "bin/opus_express", "bin/opus_filter"],
+    install_requires=["beautifulsoup4", "langid", "tqdm", "PyYAML"],
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
