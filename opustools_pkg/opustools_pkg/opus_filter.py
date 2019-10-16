@@ -252,5 +252,5 @@ class OpusFilter:
         scores_gen = filter_pipe.score(pairs_gen)
 
         with file_open(score_out, 'w') as score_file:
-            for score in tqdm(scores_gen):
+            for score in scores_gen:
                 score_file.write(json.dumps(score, sort_keys=True)+'\n')

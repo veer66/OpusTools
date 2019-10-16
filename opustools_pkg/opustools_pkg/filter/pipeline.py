@@ -4,6 +4,8 @@ import itertools
 import logging
 import sys
 
+from tqdm import tqdm
+
 from . import LengthRatioFilter, LanguageIDFilter, \
     LengthFilter, LongWordFilter, HtmlTagFilter, CharacterScoreFilter, \
     TerminalPunctuationFilter, NonZeroNumeralsFilter
@@ -44,11 +46,14 @@ class FilterPipeline:
         
     def score(self, pairs):
         """Yield dictionaries of filter scores for sentence pairs"""
-        # TODO: this does not work very nicely with tqdm progress bar
         fnames = [f.__class__.__name__ for f in self.filters]
         for num, chunk in enumerate(grouper(pairs, self._chunksize)):
-            #logger.info("Processing chunk %s", num)
-            for scores in zip(*[f.score(chunk) for f in self.filters]):
+            chunk_scores = []
+            for filt in self.filters:
+                logger.info("Processing chunk %s with %s", num, filt.__class__.__name__)
+                scorelist = list(tqdm(filt.score(chunk)))
+                chunk_scores.append(scorelist)
+            for scores in zip(*chunk_scores):
                 yield {fnames[idx]: score for idx, score in enumerate(scores)}
 
     def filter(self, pairs):
