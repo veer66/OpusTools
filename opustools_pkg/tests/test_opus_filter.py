@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 import json
 import argparse
 import os
@@ -86,7 +87,8 @@ class TestOpusFilter(unittest.TestCase):
                                 'diff_threshold': 10.0}}]}}]}
 
         OpusGet(directory='RF', source='en', target='sv', release='latest',
-            preprocess='xml', suppress_prompts=True).get_files()
+            preprocess='xml', suppress_prompts=True, download_dir=self.tempdir
+            ).get_files()
         self.opus_filter = OpusFilter(self.configuration)
         self.opus_filter.execute_steps()
 
@@ -151,7 +153,9 @@ class TestOpusFilter(unittest.TestCase):
                         )
                 self.assertEqual(sents_sv[0], 'REGERINGSFÖRKLARING .\n')
 
-    def test_write_to_current_dir_if_common_not_specified(self):
+    @mock.patch('opustools_pkg.opus_get.input', create=True)
+    def test_write_to_current_dir_if_common_not_specified(self, mocked_input):
+        mocked_input.side_effect = ['y']
         step = self.configuration['steps'][0]
         test_config = {'steps': [step]}
         test_filter = OpusFilter(test_config)
@@ -160,8 +164,13 @@ class TestOpusFilter(unittest.TestCase):
         self.assertTrue(os.path.isfile('RF1_sents.sv'))
         os.remove('RF1_sents.en')
         os.remove('RF1_sents.sv')
+        os.remove('RF_latest_xml_en.zip')
+        os.remove('RF_latest_xml_sv.zip')
+        os.remove('RF_latest_xml_en-sv.xml.gz')
 
-    def test_write_to_current_dir_if_output_dir_not_specified(self):
+    @mock.patch('opustools_pkg.opus_get.input', create=True)
+    def test_write_to_current_dir_if_output_dir_not_specified(self, mocked_input):
+        mocked_input.side_effect = ['y']
         common = {'test': 'test'}
         step = self.configuration['steps'][0]
         test_config = {'common': common, 'steps': [step]}
@@ -171,8 +180,13 @@ class TestOpusFilter(unittest.TestCase):
         self.assertTrue(os.path.isfile('RF1_sents.sv'))
         os.remove('RF1_sents.en')
         os.remove('RF1_sents.sv')
+        os.remove('RF_latest_xml_en.zip')
+        os.remove('RF_latest_xml_sv.zip')
+        os.remove('RF_latest_xml_en-sv.xml.gz')
 
-    def test_create_output_dir_if_it_does_not_exist(self):
+    @mock.patch('opustools_pkg.opus_get.input', create=True)
+    def test_create_output_dir_if_it_does_not_exist(self, mocked_input):
+        mocked_input.side_effect = ['y']
         common = {'output_directory': 'test_creating_dir'}
         step = self.configuration['steps'][0]
         test_config = {'common': common, 'steps': [step]}

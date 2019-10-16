@@ -67,7 +67,8 @@ class OpusFilter:
             release=parameters['release'],
             preprocess=parameters['preprocessing'], write_mode='moses',
             write=[src_out, tgt_out],
-            leave_non_alignments_out=True)
+            leave_non_alignments_out=True,
+            download_dir=self.output_dir)
 
         opus_reader.printPairs()
 
