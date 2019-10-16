@@ -44,9 +44,10 @@ class FilterPipeline:
         
     def score(self, pairs):
         """Yield dictionaries of filter scores for sentence pairs"""
+        # TODO: this does not work very nicely with tqdm progress bar
         fnames = [f.__class__.__name__ for f in self.filters]
         for num, chunk in enumerate(grouper(pairs, self._chunksize)):
-            logger.info("Processing chunk %s", num)
+            #logger.info("Processing chunk %s", num)
             for scores in zip(*[f.score(chunk) for f in self.filters]):
                 yield {fnames[idx]: score for idx, score in enumerate(scores)}
 

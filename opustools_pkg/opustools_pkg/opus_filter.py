@@ -77,7 +77,7 @@ class OpusFilter:
         tgt_tokenize = tokenization.get_tokenize(tgt_tokenizer)
         with file_open(source_file_name) as source_file, \
                 file_open(target_file_name) as target_file:
-            for src_line in tqdm(source_file):
+            for src_line in source_file:
                 tgt_line = target_file.readline()
                 yield (src_tokenize(src_line.rstrip()), tgt_tokenize(tgt_line.rstrip()))
 
@@ -103,7 +103,7 @@ class OpusFilter:
         limit = parameters.get('limit')
         with file_open(src_out, 'w') as source_file, \
                 file_open(tgt_out, 'w') as target_file:
-            for idx, pair in enumerate(pairs):
+            for idx, pair in tqdm(enumerate(pairs)):
                 source_file.write(pair[0]+'\n')
                 target_file.write(pair[1]+'\n')
                 source_file.flush()
@@ -216,11 +216,11 @@ class OpusFilter:
         if not overwrite and os.path.isfile(model_out):
             logger.info("Output file exists, skipping step")
             return
-        pair_gen = self.pair_generator(
+        pair_gen = tqdm(self.pair_generator(
                 os.path.join(self.output_dir, parameters['src_data']),
                 os.path.join(self.output_dir, parameters['tgt_data']),
                 src_tokenizer=parameters['parameters'].get('src_tokenizer', None),
-                tgt_tokenizer=parameters['parameters'].get('tgt_tokenizer', None))
+                tgt_tokenizer=parameters['parameters'].get('tgt_tokenizer', None)))
         word_alignment.make_priors(
                 pair_gen, model_out, model=parameters['parameters']['model'])
 
@@ -251,5 +251,5 @@ class OpusFilter:
         scores_gen = filter_pipe.score(pairs_gen)
 
         with file_open(score_out, 'w') as score_file:
-            for score in scores_gen:
+            for score in tqdm(scores_gen):
                 score_file.write(json.dumps(score, sort_keys=True)+'\n')
