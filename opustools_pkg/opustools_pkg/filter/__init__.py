@@ -235,8 +235,8 @@ class TerminalPunctuationFilter(FilterABC):
 
     def score(self, pairs):
         for sent1, sent2 in pairs:
-            spun = len([c for c in sent1 if c in ['.', '?', '!']])
-            tpun = len([c for c in sent2 if c in ['.', '?', '!']])
+            spun = len([c for c in sent1 if c in ['.', '?', '!', '…']])
+            tpun = len([c for c in sent2 if c in ['.', '?', '!', '…']])
             score = abs(spun-tpun)
             if spun > 1:
                 score += spun - 1
