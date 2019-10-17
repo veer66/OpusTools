@@ -12,7 +12,10 @@ class TestOpusFilter(unittest.TestCase):
         self.longWordFilter = opusfilter.LongWordFilter()
         self.htmlTagFilter = opusfilter.HtmlTagFilter()
         self.characterScoreFilter = opusfilter.CharacterScoreFilter()
-        self.languageIDFilter = opusfilter.LanguageIDFilter(src_lang='en', tgt_lang='fi')
+        self.languageIDFilter = opusfilter.LanguageIDFilter(src_lang='en',
+            tgt_lang='fi')
+        self.languageIDFilterCld = opusfilter.LanguageIDFilter(src_lang='en',
+            tgt_lang='fi', id_method='cld2')
         self.terminalPunctuationFilter = opusfilter.TerminalPunctuationFilter()
         self.nonZeroNumeralsFilter = opusfilter.NonZeroNumeralsFilter()
 
@@ -137,6 +140,10 @@ class TestOpusFilter(unittest.TestCase):
 
     def test_LanguageIDFilter_confidence(self):
         english = 'This sentence is written in English.'
+        conf = self.languageIDFilterCld.confidence(english, 'en')
+        self.assertEqual(conf, 0.97)
+        conf = self.languageIDFilterCld.confidence(english, 'fi')
+        self.assertEqual(conf, 0.0)
         conf = self.languageIDFilter.confidence(english, 'en')
         self.assertEqual(conf, 1.0)
         conf = self.languageIDFilter.confidence(english, 'fi')
@@ -147,10 +154,16 @@ class TestOpusFilter(unittest.TestCase):
         finnish = 'Tämä lause on kirjoitettu suomeksi.'
         score = next(self.languageIDFilter.score([(english, finnish)]))
         self.assertEqual(score, (1.0, 1.0))
+        score = next(self.languageIDFilterCld.score([(english, finnish)]))
+        self.assertEqual(score, (0.97, 0.97))
 
     def test_LanguageIDFilter_filter(self):
         english = 'This sentence is written in English.'
         finnish = 'Tämä lause on kirjoitettu suomeksi.'
+        answer = next(self.languageIDFilterCld.decisions([(english, finnish)]))
+        self.assertTrue(answer)
+        answer = next(self.languageIDFilterCld.decisions([(finnish, english)]))
+        self.assertFalse(answer)
         answer = next(self.languageIDFilter.decisions([(english, finnish)]))
         self.assertTrue(answer)
         answer = next(self.languageIDFilter.decisions([(finnish, english)]))

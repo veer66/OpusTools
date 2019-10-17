@@ -8,6 +8,7 @@ import difflib
 
 import regex
 from langid.langid import LanguageIdentifier, model
+import pycld2
 from bs4 import BeautifulSoup as bs
 
 
@@ -178,26 +179,40 @@ class CharacterScoreFilter(FilterABC):
 class LanguageIDFilter(FilterABC):
     """Language identification confidence filter"""
 
-    def __init__(self, src_lang=None, tgt_lang=None, src_threshold=0, tgt_threshold=0, **kwargs):
+    def __init__(self, src_lang=None, tgt_lang=None, id_method='langid', src_threshold=0, tgt_threshold=0, **kwargs):
         if not (isinstance(src_lang, str) and isinstance(tgt_lang, str)):
             logging.error("Both source and target languages need to be defined")
             raise ValueError("Strings expected, got: %s %s" % (src_lang, tgt_lang))
         self.src_lang = src_lang
         self.tgt_lang = tgt_lang
+        self.id_method = id_method
         self.src_threshold = src_threshold
         self.tgt_threshold = tgt_threshold
         self.identifier = LanguageIdentifier.from_modelstring(model, norm_probs=True)
         super().__init__(**kwargs)
 
     def confidence(self, sentence, lan):
-        try:
-            lidetails = self.identifier.classify(sentence)
-        except Exception as e:
-            lidetails = ('un', 0.0)
-        lilan, liconf = [round(x,2) if type(x) == float else x for x in lidetails]
-        if lilan != lan:
-            liconf = 0.0
-        return liconf
+        if self.id_method == 'cld2':
+            try:
+                clddetails = pycld2.detect(sentence)
+            except Exception as e:
+                clddetails = (0, 0, ((0, 'un', 0.0), 0))
+
+            cldlan = clddetails[2][0][1]
+            cldconf = round(clddetails[2][0][2]/100, 2)
+            if cldlan != lan:
+                cldconf = 0.0
+            return cldconf
+
+        elif self.id_method == 'langid':
+            try:
+                lidetails = self.identifier.classify(sentence)
+            except Exception as e:
+                lidetails = ('un', 0.0)
+            lilan, liconf = lidetails[0], round(lidetails[1], 2)
+            if lilan != lan:
+                liconf = 0.0
+            return liconf
 
     def score(self, pairs):
         for sent1, sent2 in pairs:
