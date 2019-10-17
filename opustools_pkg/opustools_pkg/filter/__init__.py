@@ -6,6 +6,7 @@ import string
 import math
 import difflib
 
+import regex
 from langid.langid import LanguageIdentifier, model
 from bs4 import BeautifulSoup as bs
 
@@ -141,7 +142,7 @@ class HtmlTagFilter(FilterABC):
 class CharacterScoreFilter(FilterABC):
     """Proportion of character are in the given script"""
 
-    def __init__(self, src_script='latin-1', tgt_script='latin-1',
+    def __init__(self, src_script='Latin', tgt_script='Latin',
             src_threshold=1, tgt_threshold=1, **kwargs):
         self.src_script = src_script
         self.tgt_script = tgt_script
@@ -153,11 +154,9 @@ class CharacterScoreFilter(FilterABC):
         total = 0
         invalid = 0
         for c in sent:
-            if c not in string.whitespace and c not in string.punctuation:
+            if regex.match(r'\p{Alphabetic=Yes}', c):
                 total += 1
-                try:
-                    c.encode(script)
-                except UnicodeEncodeError:
+                if not regex.match(r'\p{{Script={}}}'.format(script), c):
                     invalid += 1
         if total == 0:
             return 1.0

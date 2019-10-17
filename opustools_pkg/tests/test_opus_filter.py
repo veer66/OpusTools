@@ -40,8 +40,8 @@ class TestOpusFilter(unittest.TestCase):
                                 {'threshold': -2}},
                             {'NonZeroNumeralsFilter': {'threshold': 0.5}},
                             {'CharacterScoreFilter':
-                                {'src_script': 'latin-1',
-                                    'tgt_script': 'latin-1',
+                                {'src_script': 'Latin',
+                                    'tgt_script': 'Latin',
                                     'src_threshold': 1,
                                     'tgt_threshold': 1}}]}},
                 {'type': 'train_ngram',
@@ -70,8 +70,8 @@ class TestOpusFilter(unittest.TestCase):
                                 {'threshold': -2}},
                             {'NonZeroNumeralsFilter': {'threshold': 0.5}},
                             {'CharacterScoreFilter':
-                                {'src_script': 'latin-1',
-                                    'tgt_script': 'latin-1',
+                                {'src_script': 'Latin',
+                                    'tgt_script': 'Latin',
                                     'src_threshold': 1,
                                     'tgt_threshold': 1}},
                             {'WordAlignFilter': {'tokenizer': 'none',

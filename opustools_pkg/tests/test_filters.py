@@ -99,12 +99,18 @@ class TestOpusFilter(unittest.TestCase):
 
     def test_CharacterScoreFilter_characterScore(self):
         sent = 'This has ten.'
-        score = self.characterScoreFilter.characterScore(sent, 'latin-1')
+        score = self.characterScoreFilter.characterScore(sent, 'Latin')
         self.assertEqual(score, 1)
         sent = 'This hαs ten.'
-        score = self.characterScoreFilter.characterScore(sent, 'latin-1')
+        score = self.characterScoreFilter.characterScore(sent, 'Latin')
         self.assertEqual(score, 0.9)
-        score = self.characterScoreFilter.characterScore('', 'latin-1')
+        score = self.characterScoreFilter.characterScore('', 'Latin')
+        self.assertEqual(score, 1)
+        sent = 'This has ten“'
+        score = self.characterScoreFilter.characterScore(sent, 'Latin')
+        self.assertEqual(score, 1)
+        sent = 'This hĦs ten.'
+        score = self.characterScoreFilter.characterScore(sent, 'Latin')
         self.assertEqual(score, 1)
 
     def test_CharacterScoreFilter_score(self):
@@ -112,6 +118,10 @@ class TestOpusFilter(unittest.TestCase):
         sent2 = 'This hαs ten.'
         score = next(self.characterScoreFilter.score([(sent1, sent2)]))
         self.assertEqual(score, (1, 0.9))
+        sent1 = 'This has ten“'
+        sent2 = 'This hĦs ten.'
+        score = next(self.characterScoreFilter.score([(sent1, sent2)]))
+        self.assertEqual(score, (1, 1))
 
     def test_CharacterScoreFilter_filter(self):
         sent1 = 'This has ten.'

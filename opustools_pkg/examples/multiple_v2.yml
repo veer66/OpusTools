@@ -44,8 +44,8 @@ steps:
             threshold: 0.5
 
         - CharacterScoreFilter:
-            src_script: latin-1
-            tgt_script: latin-1
+            src_script: Latin
+            tgt_script: Latin
             src_threshold: 1
             tgt_threshold: 1
 
@@ -69,8 +69,8 @@ steps:
             threshold: 0.5
 
         - CharacterScoreFilter:
-            src_script: latin-1
-            tgt_script: latin-1
+            src_script: Latin
+            tgt_script: Latin
             src_threshold: 1
             tgt_threshold: 1
 
@@ -147,8 +147,8 @@ steps:
             threshold: 0.5
 
         - CharacterScoreFilter:
-            src_script: latin-1
-            tgt_script: latin-1
+            src_script: Latin
+            tgt_script: Latin
             src_threshold: 1
             tgt_threshold: 1
 
@@ -188,8 +188,8 @@ steps:
             threshold: 0.5
 
         - CharacterScoreFilter:
-            src_script: latin-1
-            tgt_script: latin-1
+            src_script: Latin
+            tgt_script: Latin
             src_threshold: 1
             tgt_threshold: 1
 
