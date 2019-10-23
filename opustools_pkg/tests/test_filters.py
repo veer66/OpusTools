@@ -100,22 +100,6 @@ class TestOpusFilter(unittest.TestCase):
         answer = next(self.htmlTagFilter.decisions([(sent1, sent2)]))
         self.assertTrue(answer)
 
-    def test_CharacterScoreFilter_characterScore(self):
-        sent = 'This has ten.'
-        score = self.characterScoreFilter.characterScore(sent, 'Latin')
-        self.assertEqual(score, 1)
-        sent = 'This hαs ten.'
-        score = self.characterScoreFilter.characterScore(sent, 'Latin')
-        self.assertEqual(score, 0.9)
-        score = self.characterScoreFilter.characterScore('', 'Latin')
-        self.assertEqual(score, 1)
-        sent = 'This has ten“'
-        score = self.characterScoreFilter.characterScore(sent, 'Latin')
-        self.assertEqual(score, 1)
-        sent = 'This hĦs ten.'
-        score = self.characterScoreFilter.characterScore(sent, 'Latin')
-        self.assertEqual(score, 1)
-
     def test_CharacterScoreFilter_score(self):
         sent1 = 'This has ten.'
         sent2 = 'This hαs ten.'

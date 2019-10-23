@@ -142,7 +142,12 @@ class HtmlTagFilter(FilterABC):
 
 
 class CharacterScoreFilter(FilterABC):
-    """Proportion of character are in the given script"""
+    """Proportion of alphabetic characters that are in the given script
+
+    For a list of valid scripts, see e.g.
+    https://www.regular-expressions.info/unicode.html
+
+    """
 
     def __init__(self, src_script='Latin', tgt_script='Latin',
             src_threshold=1, tgt_threshold=1, **kwargs):
@@ -150,26 +155,27 @@ class CharacterScoreFilter(FilterABC):
         self.tgt_script = tgt_script
         self.src_threshold = src_threshold
         self.tgt_threshold = tgt_threshold
+        self.re_not_alphas = regex.compile(r'\p{Alphabetic=No}')
+        self.re_not_src_script = regex.compile(r'\p{{^Script={}}}'.format(src_script))
+        self.re_not_tgt_script = regex.compile(r'\p{{^Script={}}}'.format(tgt_script))
         super().__init__(**kwargs)
-
-    def characterScore(self, sent, script):
-        total = 0
-        invalid = 0
-        for c in sent:
-            if regex.match(r'\p{Alphabetic=Yes}', c):
-                total += 1
-                if not regex.match(r'\p{{Script={}}}'.format(script), c):
-                    invalid += 1
-        if total == 0:
-            return 1.0
-        proper = total-invalid
-        return proper/total
 
     def score(self, pairs):
         for sent1, sent2 in pairs:
-            src_score = self.characterScore(sent1, self.src_script)
-            tgt_score = self.characterScore(sent2, self.tgt_script)
-            yield {'src': src_score, 'tgt': tgt_score}
+            scores = {}
+            src_alphas = regex.sub(self.re_not_alphas, '', sent1)
+            if src_alphas:
+                src_script = regex.sub(self.re_not_src_script, '', src_alphas)
+                scores['src'] = len(src_script) / len(src_alphas)
+            else:
+                scores['src'] = 1.0
+            tgt_alphas = regex.sub(self.re_not_alphas, '', sent2)
+            if tgt_alphas:
+                tgt_script = regex.sub(self.re_not_tgt_script, '', tgt_alphas)
+                scores['tgt'] = len(tgt_script) / len(tgt_alphas)
+            else:
+                scores['tgt'] = 1.0
+            yield scores
 
     def accept(self, score):
         src_score, tgt_score = score['src'], score['tgt']
