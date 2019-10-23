@@ -128,14 +128,13 @@ class TestOpusFilter(unittest.TestCase):
     def test_score_data(self):
         with open(os.path.join(self.tempdir, 'RF1_scores.en-sv.jsonl')) as scores_file:
             score = json.loads(scores_file.readline())
-            self.assertEqual(score['LanguageIDFilter'], [1.0, 0.98])
-            self.assertEqual(score['CharacterScoreFilter'], [1.0, 1.0])
+            self.assertEqual(score['LanguageIDFilter'], {'src': 1.0, 'tgt': 0.98})
+            self.assertEqual(score['CharacterScoreFilter'], {'src': 1.0, 'tgt': 1.0})
             self.assertEqual(score['CrossEntropyFilter'],
-                    [15.214258903317491, 7.569084909162213])
+                             {'src': 15.214258903317491, 'tgt': 7.569084909162213})
             self.assertEqual(score['TerminalPunctuationFilter'], -0.0)
             self.assertEqual(score['NonZeroNumeralsFilter'], 0.0)
-            self.assertEqual(type(score['WordAlignFilter']), list)
-
+            self.assertEqual(type(score['WordAlignFilter']), dict)
 
     def test_initial_files(self):
         with open(os.path.join(self.tempdir, 'RF1_sents.en')) as sents_file_en:
@@ -195,4 +194,3 @@ class TestOpusFilter(unittest.TestCase):
         self.assertTrue(os.path.isfile('test_creating_dir/RF1_sents.en'))
         self.assertTrue(os.path.isfile('test_creating_dir/RF1_sents.sv'))
         shutil.rmtree('test_creating_dir')
-

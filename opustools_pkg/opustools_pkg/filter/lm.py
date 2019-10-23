@@ -224,7 +224,7 @@ class CrossEntropyFilter(FilterABC):
         super().__init__(**kwargs)
 
     def accept(self, score):
-        src, tgt = score
+        src, tgt = score['src'], score['tgt']
         diff = abs(src - tgt)
         return src < self.src_threshold and tgt < self.tgt_threshold and diff < self.diff_threshold
 
@@ -232,11 +232,11 @@ class CrossEntropyFilter(FilterABC):
         src_tokenizer = LMTokenizer(**self.src_lm_params)
         tgt_tokenizer = LMTokenizer(**self.tgt_lm_params)
         for sent1, sent2 in pairs:
-            scores = []
-            for lm, tokenizer, sent in [(self.src_lm, src_tokenizer, sent1),
-                                        (self.tgt_lm, tgt_tokenizer, sent2)]:
+            scores = {}
+            for key, lm, tokenizer, sent in [('src', self.src_lm, src_tokenizer, sent1),
+                                             ('tgt', self.tgt_lm, tgt_tokenizer, sent2)]:
                 tokens = tokenizer.tokenize(sent)
                 use_word = tokenizer.wb or tokenizer.mb
-                scores.append(word_perplexity(lm, tokens, not self.perplexity) if use_word else \
-                              token_perplexity(lm, tokens, not self.perplexity))
+                scores[key] = word_perplexity(lm, tokens, not self.perplexity) if use_word else \
+                              token_perplexity(lm, tokens, not self.perplexity)
             yield scores

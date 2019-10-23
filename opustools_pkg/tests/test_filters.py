@@ -52,7 +52,7 @@ class TestOpusFilter(unittest.TestCase):
         sent1 = ' '.join('word' for i in range(99))
         sent2 = ' '.join('word' for i in range(62))
         score = next(self.lengthFilter.score([(sent1, sent2)]))
-        self.assertEqual(score, (99, 62))
+        self.assertEqual(score, {'src': 99, 'tgt': 62})
 
     def test_LengthFilter_filter(self):
         sent1 = ' '.join('word' for i in range(99))
@@ -89,7 +89,7 @@ class TestOpusFilter(unittest.TestCase):
         sent1 = '<s>This contains tags'
         sent2 = 'This does not'
         score = next(self.htmlTagFilter.score([(sent1, sent2)]))
-        self.assertEqual(score, (True, False))
+        self.assertEqual(score, {'src': True, 'tgt': False})
 
     def test_HtmlTagFilter_filter(self):
         sent1 = '<s>This contains tags'
@@ -120,11 +120,11 @@ class TestOpusFilter(unittest.TestCase):
         sent1 = 'This has ten.'
         sent2 = 'This hαs ten.'
         score = next(self.characterScoreFilter.score([(sent1, sent2)]))
-        self.assertEqual(score, (1, 0.9))
+        self.assertEqual(score, {'src': 1.0, 'tgt': 0.9})
         sent1 = 'This has ten“'
         sent2 = 'This hĦs ten.'
         score = next(self.characterScoreFilter.score([(sent1, sent2)]))
-        self.assertEqual(score, (1, 1))
+        self.assertEqual(score, {'src': 1.0, 'tgt': 1.0})
 
     def test_CharacterScoreFilter_filter(self):
         sent1 = 'This has ten.'
@@ -153,9 +153,9 @@ class TestOpusFilter(unittest.TestCase):
         english = 'This sentence is written in English.'
         finnish = 'Tämä lause on kirjoitettu suomeksi.'
         score = next(self.languageIDFilter.score([(english, finnish)]))
-        self.assertEqual(score, (1.0, 1.0))
+        self.assertEqual(score, {'src': 1.0, 'tgt': 1.0})
         score = next(self.languageIDFilterCld.score([(english, finnish)]))
-        self.assertEqual(score, (0.97, 0.97))
+        self.assertEqual(score, {'src': 0.97, 'tgt': 0.97})
 
     def test_LanguageIDFilter_filter(self):
         english = 'This sentence is written in English.'

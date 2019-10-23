@@ -91,13 +91,13 @@ class WordAlignFilter(FilterABC):
         scores_fwd_file.seek(0)
         scores_rev_file.seek(0)
         for line1, line2 in zip(scores_fwd_file, scores_rev_file):
-            yield float(line1.strip()), float(line2.strip())
+            yield {'src': float(line1.strip()), 'tgt': float(line2.strip())}
         input_file.close()
         scores_fwd_file.close()
         scores_rev_file.close()
 
     def accept(self, score):
-        src, tgt = score
+        src, tgt = score['src'], score['tgt']
         return src < self.src_threshold and tgt < self.tgt_threshold
 
     def filter(self, pairs):

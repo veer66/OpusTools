@@ -68,10 +68,10 @@ class LengthFilter(FilterABC):
             else:
                 length1 = len(sent1)
                 length2 = len(sent2)
-            yield length1, length2
+            yield {'src': length1, 'tgt': length2}
 
     def accept(self, score):
-        length1, length2 = score
+        length1, length2 = score['src'], score['tgt']
         return (length1 >= self.min_length and length2 >= self.min_length and
                 length1 <= self.max_length and length2 <= self.max_length)
 
@@ -134,10 +134,10 @@ class HtmlTagFilter(FilterABC):
         for sent1, sent2 in pairs:
             src_tags = bool(bs(sent1, 'html.parser').find())
             tgt_tags = bool(bs(sent2, 'html.parser').find())
-            yield src_tags, tgt_tags
+            yield {'src': src_tags, 'tgt': tgt_tags}
 
     def accept(self, score):
-        src_tags, tgt_tags = score
+        src_tags, tgt_tags = score['src'], score['tgt']
         return not (src_tags or tgt_tags)
 
 
@@ -169,10 +169,10 @@ class CharacterScoreFilter(FilterABC):
         for sent1, sent2 in pairs:
             src_score = self.characterScore(sent1, self.src_script)
             tgt_score = self.characterScore(sent2, self.tgt_script)
-            yield src_score, tgt_score
+            yield {'src': src_score, 'tgt': tgt_score}
 
     def accept(self, score):
-        src_score, tgt_score = score
+        src_score, tgt_score = score['src'], score['tgt']
         return (src_score >= self.src_threshold and
                 tgt_score >= self.tgt_threshold)
 
@@ -219,10 +219,10 @@ class LanguageIDFilter(FilterABC):
         for sent1, sent2 in pairs:
             src_score = self.confidence(sent1, self.src_lang)
             tgt_score = self.confidence(sent2, self.tgt_lang)
-            yield src_score, tgt_score
+            yield {'src': src_score, 'tgt': tgt_score}
 
     def accept(self, score):
-        score1, score2 = score
+        score1, score2 = score['src'], score['tgt']
         return score1 > self.src_threshold and score2 > self.tgt_threshold
 
 
