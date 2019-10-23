@@ -20,10 +20,11 @@ class ConfigurationError(Exception):
 class FilterABC(metaclass=abc.ABCMeta):
     """Abstract base class for sentence pair filters"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, name=None, **kwargs):
+        self.name = name
         self.kwargs = kwargs
         if kwargs:
-            logging.warning("Ignoring extra keyword arguments: ", kwargs)
+            logging.warning("Ignoring extra keyword arguments: %s", kwargs)
 
     @abc.abstractmethod
     def score(self, pairs):

@@ -75,3 +75,54 @@ class TestFilterPipeline(unittest.TestCase):
                     'Denna mening är skriven på svenska.')])
 
 
+class TestFilterPipelineScoreNames(unittest.TestCase):
+
+    def test_without_names(self):
+        config = [
+            {'LengthFilter': {'min_length': 1, 'max_length': 100,
+                              'unit': 'word'}},
+            {'LengthFilter': {'min_length': 8, 'max_length': 1000,
+                              'unit': 'char'}},
+        ]
+        fp = FilterPipeline.from_config(config)
+        self.assertEqual(len(fp.filters), 2)
+        self.assertSequenceEqual(
+            fp.get_score_tuples(),
+            [('LengthFilter', '1'), ('LengthFilter', '2')])
+        pairs = [('That safeguards our independence .',
+                  ('Kränkningar av svenskt territorium kommer aldrig att '
+                   'accepteras .')),
+                 ('1245..',
+                  '12345.....')]
+        scores = list(fp.score(pairs))
+        self.assertEqual(
+            scores[0],
+            {'LengthFilter': {'1': (5, 9)}, 'LengthFilter': {'2': (34, 65)}})
+        self.assertEqual(
+            scores[1],
+            {'LengthFilter': {'1': (1, 1)}, 'LengthFilter': {'2': (6, 10)}})
+
+    def test_with_names(self):
+        config = [
+            {'LengthFilter': {'min_length': 1, 'max_length': 100,
+                              'unit': 'word', 'name': 'words'}},
+            {'LengthFilter': {'min_length': 8, 'max_length': 1000,
+                              'unit': 'char', 'name': 'chars'}},
+        ]
+        fp = FilterPipeline.from_config(config)
+        self.assertEqual(len(fp.filters), 2)
+        self.assertSequenceEqual(
+            fp.get_score_tuples(),
+            [('LengthFilter', 'words'), ('LengthFilter', 'chars')])
+        pairs = [('That safeguards our independence .',
+                  ('Kränkningar av svenskt territorium kommer aldrig att '
+                   'accepteras .')),
+                 ('1245..',
+                  '12345.....')]
+        scores = list(fp.score(pairs))
+        self.assertEqual(
+            scores[0],
+            {'LengthFilter': {'words': (5, 9)}, 'LengthFilter': {'chars': (34, 65)}})
+        self.assertEqual(
+            scores[1],
+            {'LengthFilter': {'words': (1, 1)}, 'LengthFilter': {'chars': (6, 10)}})
