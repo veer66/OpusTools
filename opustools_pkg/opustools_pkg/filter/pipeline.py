@@ -65,11 +65,12 @@ class FilterPipeline:
     def score(self, pairs):
         """Yield dictionaries of filter scores for sentence pairs"""
 
-        def expand_namet(namet, score):
-            res = score
-            for part in reversed(namet):
-                res = {str(part): res}
-            return res
+        def update_score_dict(scored, namet, score):
+            for key in namet[:-1]:
+                if key not in scored:
+                    scored[key] = {}
+                scored = scored[key]
+            scored[namet[-1]] = score
 
         fnames = self.get_score_tuples()
         for num, chunk in enumerate(grouper(pairs, self._chunksize)):
@@ -79,8 +80,10 @@ class FilterPipeline:
                 scorelist = list(tqdm(filt.score(chunk)))
                 chunk_scores.append(scorelist)
             for scores in zip(*chunk_scores):
-                yield {fnames[idx][0]: expand_namet(fnames[idx][1:], score)
-                       for idx, score in enumerate(scores)}
+                output = {}
+                for idx, score in enumerate(scores):
+                    update_score_dict(output, fnames[idx], score)
+                yield output
 
     def filter(self, pairs):
         """Yield sentence pairs accepted by all filters"""

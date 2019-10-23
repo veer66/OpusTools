@@ -97,12 +97,10 @@ class TestFilterPipelineScoreNames(unittest.TestCase):
         scores = list(fp.score(pairs))
         self.assertEqual(
             scores[0],
-            {'LengthFilter': {'1': {'src': 5, 'tgt': 9}},
-             'LengthFilter': {'2': {'src': 34, 'tgt': 65}}})
+            {'LengthFilter': {'1': {'src': 5, 'tgt': 9}, '2': {'src': 34, 'tgt': 65}}})
         self.assertEqual(
             scores[1],
-            {'LengthFilter': {'1': {'src': 1, 'tgt': 1}},
-             'LengthFilter': {'2': {'src': 6, 'tgt': 10}}})
+            {'LengthFilter': {'1': {'src': 1, 'tgt': 1}, '2': {'src': 6, 'tgt': 10}}})
 
     def test_with_names(self):
         config = [
@@ -124,9 +122,7 @@ class TestFilterPipelineScoreNames(unittest.TestCase):
         scores = list(fp.score(pairs))
         self.assertEqual(
             scores[0],
-            {'LengthFilter': {'words': {'src': 5, 'tgt': 9}},
-             'LengthFilter': {'chars': {'src': 34, 'tgt': 65}}})
+            {'LengthFilter': {'words': {'src': 5, 'tgt': 9}, 'chars': {'src': 34, 'tgt': 65}}})
         self.assertEqual(
             scores[1],
-            {'LengthFilter': {'words': {'src': 1, 'tgt': 1}},
-             'LengthFilter': {'chars': {'src': 6, 'tgt': 10}}})
+            {'LengthFilter': {'words': {'src': 1, 'tgt': 1}, 'chars': {'src': 6, 'tgt': 10}}})
