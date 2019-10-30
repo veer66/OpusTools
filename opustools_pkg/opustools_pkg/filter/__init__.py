@@ -47,6 +47,12 @@ class FilterABC(metaclass=abc.ABCMeta):
             if self.accept(next(self.score([(sent1, sent2)]))):
                 yield sent1, sent2
 
+    def filterfalse(self, pairs):
+        """Yield sentence pairs that are not accepted"""
+        for sent1, sent2 in pairs:
+            if not self.accept(next(self.score([(sent1, sent2)]))):
+                yield sent1, sent2
+
 
 class LengthFilter(FilterABC):
     """Sentence length filter"""

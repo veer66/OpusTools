@@ -147,11 +147,11 @@ def get_lm(**kwargs):
     args.mb = _temptokenfile(args.mb) if args.mb else ''
 
     if args.interpolate:
-        lms = [args.filename] + [x[1] for x in args.interpolate]
-        wsum = sum(float(x[0]) for x in args.interpolate)
+        lms = [args.filename] + [x[0] for x in args.interpolate]
+        wsum = sum(float(x[1]) for x in args.interpolate)
         if wsum >= 1:
             logger.warning("Weights are too high!")
-        weights = [1 - wsum] + [float(x[0]) for x in args.interpolate]
+        weights = [1 - wsum] + [float(x[1]) for x in args.interpolate]
         tg = varikn.InterTreeGram(lms, weights)
         lm = varikn.Perplexity(tg, args.ccs, args.wb, args.mb, args.unk, not args.include_unks)
     else:

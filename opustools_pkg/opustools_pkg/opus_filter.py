@@ -47,11 +47,25 @@ class OpusFilter:
                 'score': self.score_data
             }
 
-    def execute_steps(self, overwrite=False):
+    def execute_steps(self, overwrite=False, last=None):
         """Execute steps in the same order as they are in the configuration"""
         for num, step in enumerate(self.configuration['steps']):
-            logger.info('Running step {}: {}'.format(num + 1, step))
+            if last is not None and num + 1 > last:
+                logger.info('Stopping after step %s', last)
+                break
+            logger.info('Running step %s: %s', num + 1, step)
             self.step_functions[step['type']](step['parameters'], overwrite=overwrite)
+
+    def execute_step(self, num, overwrite=False):
+        """Execute single step in the configuration (first = 1, last = -1)
+
+        Does not check any dependencies and may fail if the input
+        files do not exist.
+
+        """
+        step = self.configuration['steps'][num if num < 0 else num - 1]
+        logger.info('Running step %s: %s', num, step)
+        self.step_functions[step['type']](step['parameters'], overwrite=overwrite)
 
     def read_from_opus(self, parameters, overwrite=False):
         """Download and read a corpus from OPUS"""
@@ -98,9 +112,13 @@ class OpusFilter:
             logger.info("Output files exists, skipping step")
             return
         filter_pipe = FilterPipeline.from_config(parameters['filters'])
+        filterfalse = parameters.get('filterfalse', False)
         pairs_gen = self.get_pairs(parameters['src_input'],
                 parameters['tgt_input'])
-        pairs = filter_pipe.filter(pairs_gen)
+        if filterfalse:
+            pairs = filter_pipe.filterfalse(pairs_gen)
+        else:
+            pairs = filter_pipe.filter(pairs_gen)
         limit = parameters.get('limit')
         with file_open(src_out, 'w') as source_file, \
                 file_open(tgt_out, 'w') as target_file:
@@ -242,9 +260,17 @@ class OpusFilter:
                 src_lm_params = f[filter_name]['src_lm_params']
                 src_lm_params['filename'] = os.path.join(self.output_dir,
                         src_lm_params['filename'])
+                if src_lm_params.get('interpolate'):
+                    for idx in range(len(src_lm_params['interpolate'])):
+                        src_lm_params['interpolate'][idx][0] = os.path.join(
+                            self.output_dir, src_lm_params['interpolate'][idx][0])
                 tgt_lm_params = f[filter_name]['tgt_lm_params']
                 tgt_lm_params['filename'] = os.path.join(self.output_dir,
                         tgt_lm_params['filename'])
+                if tgt_lm_params.get('interpolate'):
+                    for idx in range(len(tgt_lm_params['interpolate'])):
+                        tgt_lm_params['interpolate'][idx][0] = os.path.join(
+                            self.output_dir, tgt_lm_params['interpolate'][idx][0])
 
         pairs_gen = self.get_pairs(parameters['src_input'],
                 parameters['tgt_input'])

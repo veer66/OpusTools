@@ -87,6 +87,17 @@ class FilterPipeline:
 
     def filter(self, pairs):
         """Yield sentence pairs accepted by all filters"""
-        for f in self.filters:
-            pairs = f.filter(pairs)
+        for filt in self.filters:
+            pairs = filt.filter(pairs)
+        return pairs
+
+    def filterfalse(self, pairs):
+        """Yield sentence pairs accepted by none of the filters
+
+        Note that this is not the opposite result of filter(), but a
+        pair is yielded only if all of the filters reject it.
+
+        """
+        for filt in self.filters:
+            pairs = filt.filterfalse(pairs)
         return pairs

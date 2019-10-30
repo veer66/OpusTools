@@ -100,7 +100,7 @@ class WordAlignFilter(FilterABC):
         src, tgt = score['src'], score['tgt']
         return src < self.src_threshold and tgt < self.tgt_threshold
 
-    def filter(self, pairs):
+    def _filtergen(self, pairs, filterfalse=False, decisions=False):
         input_file = create_align_input_file(
             pairs, src_tokenizer=self.src_tokenizer, tgt_tokenizer=self.tgt_tokenizer)
         scores_fwd_file = tempfile.NamedTemporaryFile('w+')
@@ -112,10 +112,21 @@ class WordAlignFilter(FilterABC):
         scores_fwd_file.seek(0)
         scores_rev_file.seek(0)
         for input_pair, line1, line2 in zip(input_file, scores_fwd_file, scores_rev_file):
-            score = float(line1.strip()), float(line2.strip())
-            if self.accept(score):
+            score = {'src': float(line1.strip()), 'tgt': float(line2.strip())}
+            if decisions:
+                yield self.accept(score)
+            elif bool(filterfalse) != bool(self.accept(score)):
                 sent1, sent2 = input_pair.strip().split(' ||| ')
                 yield sent1, sent2
         input_file.close()
         scores_fwd_file.close()
         scores_rev_file.close()
+
+    def filter(self, pairs):
+        return self._filtergen(pairs, decisions=False, filterfalse=False)
+
+    def filterfalse(self, pairs):
+        return self._filtergen(pairs, decisions=False, filterfalse=True)
+
+    def decisions(self, pairs):
+        return self._filtergen(pairs, decisions=True, filterfalse=False)
