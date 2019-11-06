@@ -66,32 +66,30 @@ def train(datafile, outputfile, **kwargs):
     vg.write_file(outputfile, args.arpa)
 
 
-def token_perplexity(lm, tokens, entropy=False):
-    """Calculate token perplexity for sentence tokens"""
+def token_perplexity(lm, tokens):
+    """Calculate token perplexity, entropy, and negative logprob for sentence tokens"""
     lpsum = 0.0
     for token in tokens:
         lpsum += lm.token_logprob(token)
-    if entropy:
-        ppl = -lpsum / lm.processed_tokens() / math.log10(2)
-    else:
-        ppl = 10**(-lpsum / lm.processed_tokens())
+    logprob = -lpsum / math.log10(2)
+    entropy = logprob / lm.processed_tokens()
+    ppl = 10**(-lpsum / lm.processed_tokens())
     lm.clear_history()
     lm.init_variables()
-    return ppl
+    return ppl, entropy, logprob
 
 
-def word_perplexity(lm, tokens, entropy=False):
-    """Calculate word perplexity for sentence tokens"""
+def word_perplexity(lm, tokens):
+    """Calculate word perplexity, entropy, and negative logprob for sentence tokens"""
     lpsum = 0.0
     for token in tokens:
         lpsum += lm.word_logprob(token)
-    if entropy:
-        ppl = -lpsum / lm.processed_words() / math.log10(2)
-    else:
-        ppl = 10**(-lpsum / lm.processed_words())
+    logprob = -lpsum / math.log10(2)
+    entropy = logprob / lm.processed_words()
+    ppl = 10**(-lpsum / lm.processed_words())
     lm.clear_history()
     lm.init_variables()
-    return ppl
+    return ppl, entropy, logprob
 
 
 _VARIKN_PERPLEXITY_PARAMS = {
@@ -207,17 +205,22 @@ class LMTokenizer:
 
 class CrossEntropyFilter(FilterABC):
 
-    def __init__(self, src_lm_params=None, tgt_lm_params=None, perplexity=False,
+    score_types = {'entropy', 'perplexity', 'logprob'}
+
+    def __init__(self, src_lm_params=None, tgt_lm_params=None, score_type='entropy',
                  src_threshold=50.0, tgt_threshold=50.0, diff_threshold=10.0, **kwargs):
         if not src_lm_params or not tgt_lm_params:
             raise ConfigurationError("Language model configurations need to be defined")
         if src_lm_params.get('segmentation', {}).get('type', 'char') != 'char':
             raise ConfigurationError("Only segmentation type supported currently is 'char'")
+        if score_type not in self.score_types:
+            raise ConfigurationError("Unknown score type {}, should be one of {}".format(
+                score_type, self.score_types))
+        self.score_type = score_type
         self.src_lm_params = src_lm_params
         self.tgt_lm_params = tgt_lm_params
         self.src_lm = get_lm(**self.src_lm_params)
         self.tgt_lm = get_lm(**self.tgt_lm_params)
-        self.perplexity = perplexity
         self.src_threshold = src_threshold
         self.tgt_threshold = tgt_threshold
         self.diff_threshold = diff_threshold
@@ -237,6 +240,12 @@ class CrossEntropyFilter(FilterABC):
                                              ('tgt', self.tgt_lm, tgt_tokenizer, sent2)]:
                 tokens = tokenizer.tokenize(sent)
                 use_word = tokenizer.wb or tokenizer.mb
-                scores[key] = word_perplexity(lm, tokens, not self.perplexity) if use_word else \
-                              token_perplexity(lm, tokens, not self.perplexity)
+                ppl, entr, logprob = word_perplexity(lm, tokens) if use_word \
+                                     else token_perplexity(lm, tokens)
+                if self.score_type == 'logprob':
+                    scores[key] = logprob
+                elif self.score_type == 'perplexity':
+                    scores[key] = ppl
+                else:
+                    scores[key] = entr
             yield scores
